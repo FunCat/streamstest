@@ -1,13 +1,16 @@
-import com.streamsets.pipeline.sdk.ProcessorRunner;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClients;
+import utils.StreamSetsConnection;
+
+import java.io.IOException;
+import java.util.HashMap;
+
 
 public class Test {
 
-    HttpClient httpclient = HttpClients.createDefault();
-    HttpPost httppost = new HttpPost("http://www.a-domain.com/foo/");
+    public static void main(String[] args) throws IOException {
+        StreamSetsConnection connection = new StreamSetsConnection();
+        HashMap<String, String> response = connection.getPipelines();
 
-
-
+        String id = response.get("test");
+        System.out.println(connection.getMetrics(id));
+    }
 }
