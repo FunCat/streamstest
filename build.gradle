@@ -1,0 +1,19 @@
+group 'streamsets-test'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile(
+            "com.streamsets:streamsets-datacollector-api:3.1.0.0",
+            "com.streamsets:streamsets-datacollector-sdk:3.1.0.0",
+            "org.apache.httpcomponents:httpclient:4.5.5"
+    )
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
