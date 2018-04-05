@@ -1,3 +1,10 @@
-.idea/
-target/
+.gradle/
+build
+out
+bin/
+*.class
+*.log
+*.idea
 *.iml
+*.ipr
+*.iws

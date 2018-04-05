@@ -9,13 +9,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.Map;
 
 public class StreamSetsConnection {
 
@@ -89,10 +87,13 @@ public class StreamSetsConnection {
         return pipelines;
     }
 
-    public boolean startPipeline(String pipelineId) throws IOException {
+    public boolean startPipeline(String pipelineId) throws IOException, InterruptedException {
         HttpResponse httpResponse = postRequest("/rest/v1/pipeline/" + pipelineId + "/start?rev=0");
 
         if(httpResponse.getStatusLine().getStatusCode() == 200){
+            while(!isRunning(pipelineId)){
+                Thread.sleep(1000);
+            }
             return true;
         }
         return false;
@@ -134,7 +135,7 @@ public class StreamSetsConnection {
             HttpResponse httpResponse = getRequest("/rest/v1/pipeline/" + pipelineId + "/metrics?rev=0");
             String response = responseToString(httpResponse);
             JsonNode actualObj = objectMapper.readTree(response);
-            return actualObj.get("gauges").get("jvm.memory.heap.usage").get("value").asText();
+            return actualObj.get("timers").get("pipeline.batchProcessing.timer").get("m5_rate").asText();
         }
 
         return "Pipeline isn't running!";
