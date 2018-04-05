@@ -2,18 +2,21 @@ package utils;
 
 import _ss_com.fasterxml.jackson.databind.JsonNode;
 import _ss_com.fasterxml.jackson.databind.ObjectMapper;
+import _ss_com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
+import java.util.*;
 
 public class StreamSetsConnection {
 
@@ -58,7 +61,7 @@ public class StreamSetsConnection {
         return client.execute(request);
     }
 
-    private HttpResponse postRequest(String url) throws IOException {
+    private HttpResponse postRequest(String url, String body) throws IOException {
         String rightUrl = host + ":" + port + url;
         HttpClient client = HttpClientBuilder.create().build();
         HttpPost request = new HttpPost(rightUrl);
@@ -66,6 +69,12 @@ public class StreamSetsConnection {
                 new UsernamePasswordCredentials(ssdcUser, ssdcPassword),
                 "UTF-8", false));
         request.addHeader("X-Requested-By", "sdc");
+
+        if(body != null){
+            request.addHeader("Content-Type", "application/json");
+            HttpEntity entity = new ByteArrayEntity(body.getBytes("UTF-8"));
+            request.setEntity(entity);
+        }
 
         return client.execute(request);
     }
@@ -88,7 +97,7 @@ public class StreamSetsConnection {
     }
 
     public boolean startPipeline(String pipelineId) throws IOException, InterruptedException {
-        HttpResponse httpResponse = postRequest("/rest/v1/pipeline/" + pipelineId + "/start?rev=0");
+        HttpResponse httpResponse = postRequest("/rest/v1/pipeline/" + pipelineId + "/start?rev=0", null);
 
         if(httpResponse.getStatusLine().getStatusCode() == 200){
             while(!isRunning(pipelineId)){
@@ -99,8 +108,17 @@ public class StreamSetsConnection {
         return false;
     }
 
+    public boolean startPipelines(Map<String, String> pipelines) throws IOException {
+        List<String> values = new ArrayList<>(pipelines.values());
+        ArrayNode array = objectMapper.valueToTree(values);
+
+        HttpResponse httpResponse = postRequest("/rest/v1/pipelines/start", array.toString());
+
+        return true;
+    }
+
     public boolean stopPipeline(String pipelineId) throws IOException {
-        HttpResponse httpResponse = postRequest("/rest/v1/pipeline/" + pipelineId + "/stop?rev=0");
+        HttpResponse httpResponse = postRequest("/rest/v1/pipeline/" + pipelineId + "/stop?rev=0", null);
 
         if(httpResponse.getStatusLine().getStatusCode() == 200){
             return true;
@@ -109,7 +127,7 @@ public class StreamSetsConnection {
     }
 
     public boolean forceStopPipeline(String pipelineId) throws IOException {
-        HttpResponse httpResponse = postRequest("/rest/v1/pipeline/" + pipelineId + "/forceStop?rev=0");
+        HttpResponse httpResponse = postRequest("/rest/v1/pipeline/" + pipelineId + "/forceStop?rev=0", null);
 
         if(httpResponse.getStatusLine().getStatusCode() == 200){
             return true;
@@ -136,6 +154,17 @@ public class StreamSetsConnection {
             String response = responseToString(httpResponse);
             JsonNode actualObj = objectMapper.readTree(response);
             return actualObj.get("timers").get("pipeline.batchProcessing.timer").get("m5_rate").asText();
+        }
+
+        return "Pipeline isn't running!";
+    }
+
+    public String getErrors(String pipelineId) throws IOException {
+        if(isRunning(pipelineId)) {
+            HttpResponse httpResponse = getRequest("/rest/v1/pipeline/" + pipelineId + "/metrics?rev=0");
+            String response = responseToString(httpResponse);
+            JsonNode actualObj = objectMapper.readTree(response);
+            return actualObj.get("counters").get("pipeline.batchErrorRecords.counter").get("count").asText();
         }
 
         return "Pipeline isn't running!";

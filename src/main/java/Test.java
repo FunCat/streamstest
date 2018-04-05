@@ -8,10 +8,10 @@ public class Test {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         StreamSetsConnection connection = new StreamSetsConnection();
-        HashMap<String, String> response = connection.getPipelines();
+        HashMap<String, String> pipelines = connection.getPipelines();
 
-        String id = response.get("test");
-        connection.startPipeline(id);
+        String id = pipelines.get("test");
+        connection.startPipelines(pipelines);
         while(true) {
 
             String m5Rate = connection.getMetrics(id);

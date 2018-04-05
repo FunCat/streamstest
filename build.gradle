@@ -11,7 +11,6 @@ repositories {
 
 dependencies {
     compile(
-            "com.streamsets:streamsets-datacollector-api:3.1.0.0",
             "com.streamsets:streamsets-datacollector-sdk:3.1.0.0",
             "org.apache.httpcomponents:httpclient:4.5.5",
             "com.fasterxml.jackson.core:jackson-core:2.9.5"
